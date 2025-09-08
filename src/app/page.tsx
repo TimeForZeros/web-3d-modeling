@@ -5,6 +5,7 @@ import { useLoader } from '@react-three/fiber';
 import {
   GizmoHelper,
   GizmoViewport,
+  Gltf,
   Grid,
   OrbitControls,
   PerspectiveCamera,
@@ -14,14 +15,20 @@ import {
 import { RefObject, useRef, useState, useEffect, Suspense } from 'react';
 import { Object3D } from 'three';
 const Xbot = () => {
-  const groupRef = useRef(null)
-  const xBot = useGLTF('/Xbot.glb')
-  console.log(xBot); 
+  const groupRef = useRef(null);
+  const xBot = useGLTF('/Xbot.glb');
+  console.log(xBot);
   return (
     <group ref={groupRef} dispose={null}>
-      <primitive object={xBot} />
+      <Gltf
+        castShadow
+        receiveShadow
+        scale={1}
+        position={[0, 0, 0]}
+        src="/Xbot.glb"
+      />
     </group>
-  )
+  );
 };
 function Scene() {
   const meshRef = useRef(null);
@@ -61,8 +68,7 @@ function Scene() {
       <mesh
         ref={meshRef}
         onClick={() => setSelectedMesh(meshRef.current)}
-        onPointerMissed={deselectMesh}
-      >
+        onPointerMissed={deselectMesh}>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color="red" />
       </mesh>
@@ -70,8 +76,7 @@ function Scene() {
         ref={mesh2Ref}
         position={[2, 0, 0]}
         onClick={() => setSelectedMesh(mesh2Ref.current)}
-        onPointerMissed={deselectMesh}
-      >
+        onPointerMissed={deselectMesh}>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color="orange" />
       </mesh>
@@ -89,6 +94,7 @@ export default function Home() {
   return (
     <div className="h-screen">
       <Canvas>
+        <color attach="background" args={['#F0F0F0']} />
         <Scene />
       </Canvas>
     </div>
