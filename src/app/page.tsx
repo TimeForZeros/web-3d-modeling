@@ -1,5 +1,7 @@
 'use client';
 import { Canvas } from '@react-three/fiber';
+import { GLTFLoader } from 'three/examples/jsm/Addons.js';
+import { useLoader } from '@react-three/fiber';
 import {
   GizmoHelper,
   GizmoViewport,
@@ -7,9 +9,20 @@ import {
   OrbitControls,
   PerspectiveCamera,
   TransformControls,
+  useGLTF,
 } from '@react-three/drei';
-import { RefObject, useRef, useState, useEffect } from 'react';
+import { RefObject, useRef, useState, useEffect, Suspense } from 'react';
 import { Object3D } from 'three';
+const Xbot = () => {
+  const groupRef = useRef(null)
+  const xBot = useGLTF('/Xbot.glb')
+  console.log(xBot); 
+  return (
+    <group ref={groupRef} dispose={null}>
+      <primitive object={xBot} />
+    </group>
+  )
+};
 function Scene() {
   const meshRef = useRef(null);
   const mesh2Ref = useRef(null);
@@ -17,10 +30,7 @@ function Scene() {
   const [gizmoMode, setGizmoMode] = useState<'scale' | 'rotate' | 'translate'>('translate');
   useEffect(() => {
     const handleKeyPress = (event) => {
-      console.count();
-      console.log(event);
       const { key } = event;
-      console.log(key)
       switch (key) {
         case 'w':
           setGizmoMode('translate');
@@ -35,7 +45,7 @@ function Scene() {
     };
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
-  },[]);
+  }, []);
 
   const deselectMesh = () => {
     setSelectedMesh(null);
@@ -45,11 +55,13 @@ function Scene() {
     <>
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
 
       <mesh
         ref={meshRef}
         onClick={() => setSelectedMesh(meshRef.current)}
-        onPointerMissed={deselectMesh} // Hides gizmo when clicking away
+        onPointerMissed={deselectMesh}
       >
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color="red" />
@@ -58,12 +70,14 @@ function Scene() {
         ref={mesh2Ref}
         position={[2, 0, 0]}
         onClick={() => setSelectedMesh(mesh2Ref.current)}
-        onPointerMissed={deselectMesh} // Hides gizmo when clicking away
+        onPointerMissed={deselectMesh}
       >
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color="orange" />
       </mesh>
-
+      <Suspense>
+        <Xbot />
+      </Suspense>
       {selectedMesh && <TransformControls mode={gizmoMode} object={selectedMesh} />}
       <OrbitControls enabled={!selectedMesh} />
       <Grid scale={100} />
