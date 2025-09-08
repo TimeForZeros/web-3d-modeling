@@ -17,7 +17,10 @@ function Scene() {
   const [gizmoMode, setGizmoMode] = useState<'scale' | 'rotate' | 'translate'>('translate');
   useEffect(() => {
     const handleKeyPress = (event) => {
+      console.count();
+      console.log(event);
       const { key } = event;
+      console.log(key)
       switch (key) {
         case 'w':
           setGizmoMode('translate');
@@ -31,8 +34,8 @@ function Scene() {
       }
     };
     window.addEventListener('keypress', handleKeyPress);
-    return window.removeEventListener('keypress', handleKeyPress);
-  });
+    return () => window.removeEventListener('keypress', handleKeyPress);
+  },[]);
 
   const deselectMesh = () => {
     setSelectedMesh(null);
