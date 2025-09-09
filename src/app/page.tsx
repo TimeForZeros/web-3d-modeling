@@ -12,27 +12,31 @@ import {
   TransformControls,
   useGLTF,
 } from '@react-three/drei';
-import { RefObject, useRef, useState, useEffect, Suspense } from 'react';
+import { RefObject, useRef, useState, useEffect, Suspense, forwardRef } from 'react';
 import { Object3D } from 'three';
-const Xbot = () => {
-  const groupRef = useRef(null);
-  const xBot = useGLTF('/Xbot.glb');
-  console.log(xBot);
+
+const Xbot = forwardRef((props, ref) => {
+  const { scene } = useGLTF('/Xbot.glb');
   return (
-    <group ref={groupRef} dispose={null}>
-      <Gltf
-        castShadow
-        receiveShadow
-        scale={1}
-        position={[0, 0, 0]}
-        src="/Xbot.glb"
-      />
-    </group>
+    <primitive
+      object={scene}
+      ref={ref}
+      castShadow
+      receiveShadow
+      scale={1}
+      position={[0, 0, 0]}
+      {...props}
+    />
   );
-};
+});
+
+Xbot.displayName = 'Xbot';
+
 function Scene() {
   const meshRef = useRef(null);
   const mesh2Ref = useRef(null);
+  const xbotRef = useRef(null);
+
   const [selectedMesh, setSelectedMesh] = useState<Object3D | null>(null);
   const [gizmoMode, setGizmoMode] = useState<'scale' | 'rotate' | 'translate'>('translate');
   useEffect(() => {
@@ -57,6 +61,7 @@ function Scene() {
   const deselectMesh = () => {
     setSelectedMesh(null);
   };
+  const { scene } = useGLTF('/Xbot.glb');
 
   return (
     <>
@@ -81,7 +86,16 @@ function Scene() {
         <meshStandardMaterial color="orange" />
       </mesh>
       <Suspense>
-        <Xbot />
+        <primitive
+          object={scene}
+          ref={xbotRef}
+          castShadow
+          receiveShadow
+          scale={1}
+          position={[0, 0, 0]}
+          onClick={() => setSelectedMesh(xbotRef.current)}
+          onPointerMissed={deselectMesh}
+        />
       </Suspense>
       {selectedMesh && <TransformControls mode={gizmoMode} object={selectedMesh} />}
       <OrbitControls enabled={!selectedMesh} />
