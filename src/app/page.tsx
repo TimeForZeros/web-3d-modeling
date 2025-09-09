@@ -12,15 +12,40 @@ import {
   TransformControls,
   useGLTF,
 } from '@react-three/drei';
-import { RefObject, useRef, useState, useEffect, Suspense, forwardRef } from 'react';
-import { Object3D } from 'three';
+import { RefObject, useRef, useState, useEffect, Suspense, forwardRef, createRef } from 'react';
+import { Object3D, Object3DEventMap } from 'three';
+import { create } from 'zustand';
 
-const Xbot = forwardRef((props, ref) => {
+type XbotState = {
+  nodes: Record<string, RefObject<Object3DEventMap>>;
+};
+type XbotStateAction = {
+  setNodeRef: (id: string, el: Object3DEventMap) => void,
+};
+
+type XbotStore = XbotState & XbotStateAction;
+const useXbotStore = create<XbotStore>((set, get) => ({
+  nodes: {},
+  setNodeRef: (id, el) => {
+    const nodes = get().nodes;
+    if (!nodes[id]) {
+      nodes[id] = { current: el };
+      set({ nodes: { ...nodes } });
+    }
+    return nodes[id];
+  }
+}));
+
+const Xbot = (props) => {
+  console.log('hits');
+  const store = useXbotStore();
+  console.log(store.nodes);
+
   const { scene } = useGLTF('/Xbot.glb');
   return (
     <primitive
       object={scene}
-      ref={ref}
+      ref={(el) => store.setNodeRef('test', el)}
       castShadow
       receiveShadow
       scale={1}
@@ -33,8 +58,6 @@ const Xbot = forwardRef((props, ref) => {
 Xbot.displayName = 'Xbot';
 
 function Scene() {
-  const meshRef = useRef(null);
-  const mesh2Ref = useRef(null);
   const xbotRef = useRef(null);
 
   const [selectedMesh, setSelectedMesh] = useState<Object3D | null>(null);
@@ -69,26 +92,9 @@ function Scene() {
       <pointLight position={[10, 10, 10]} />
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
-
-      <mesh
-        ref={meshRef}
-        onClick={() => setSelectedMesh(meshRef.current)}
-        onPointerMissed={deselectMesh}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="red" />
-      </mesh>
-      <mesh
-        ref={mesh2Ref}
-        position={[2, 0, 0]}
-        onClick={() => setSelectedMesh(mesh2Ref.current)}
-        onPointerMissed={deselectMesh}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="orange" />
-      </mesh>
       <Suspense>
-        <primitive
+        <Xbot
           object={scene}
-          ref={xbotRef}
           castShadow
           receiveShadow
           scale={1}
