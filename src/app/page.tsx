@@ -25,7 +25,7 @@ export default function Home() {
   return (
     <div className="h-screen">
       <Canvas>
-        <color attach="background" args={['#F0F0F0']} />
+        {/* <color attach="background" args={['#F0F0F0']} /> */}
         <Scene />
       </Canvas>
     </div>
