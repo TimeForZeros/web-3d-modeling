@@ -17,28 +17,45 @@ import { Object3D, Object3DEventMap } from 'three';
 import { create } from 'zustand';
 
 type XbotState = {
-  nodes: Record<string, RefObject<Object3DEventMap>>;
+  nodes: Record<string, RefObject<Object3D<Object3DEventMap>>>;
 };
 type XbotStateAction = {
-  setNodeRef: (id: string, el: Object3DEventMap) => void,
+  setNodeRef: (id: string, el: Object3D<Object3DEventMap>) => void,
 };
 
 type XbotStore = XbotState & XbotStateAction;
+
 const useXbotStore = create<XbotStore>((set, get) => ({
   nodes: {},
   setNodeRef: (id, el) => {
     const nodes = get().nodes;
     if (!nodes[id]) {
-      nodes[id] = { current: el };
+      nodes[id] = { current: el as Object3D<Object3DEventMap> };
       set({ nodes: { ...nodes } });
     }
     return nodes[id];
   }
 }));
 
-const Xbot = (props) => {
-  console.log('hits');
+type GizmoState = {
+  selectedMesh: RefObject<Object3D | Object3DEventMap | null> | null
+  mode: 'scale' | 'rotate' | 'translate'
+}
+type GizmoStateAction = {
+  setSelectedMesh: (ref: RefObject<Object3D> | null) => void,
+  setMode: (mode: 'scale' | 'rotate' | 'translate') => void,
+}
+type GizmoStore = GizmoState & GizmoStateAction;
+const useGizmoStore = create<GizmoStore>((set) => ({
+  selectedMesh: null,
+  mode: 'translate',
+  setSelectedMesh: (ref) => set({selectedMesh: ref}),
+  setMode: (mode) => set({mode}),
+}))
+
+const Xbot = () => {
   const store = useXbotStore();
+  const gizmoStore = useGizmoStore();
   console.log(store.nodes);
 
   const { scene } = useGLTF('/Xbot.glb');
@@ -50,7 +67,8 @@ const Xbot = (props) => {
       receiveShadow
       scale={1}
       position={[0, 0, 0]}
-      {...props}
+      onClick={() => gizmoStore.setSelectedMesh(store.nodes['test'])}
+      onPointerMissed={() => gizmoStore.setSelectedMesh(null)}
     />
   );
 });
@@ -58,9 +76,7 @@ const Xbot = (props) => {
 Xbot.displayName = 'Xbot';
 
 function Scene() {
-  const xbotRef = useRef(null);
-
-  const [selectedMesh, setSelectedMesh] = useState<Object3D | null>(null);
+  const gizmoStore = useGizmoStore();
   const [gizmoMode, setGizmoMode] = useState<'scale' | 'rotate' | 'translate'>('translate');
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -80,10 +96,6 @@ function Scene() {
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
   }, []);
-
-  const deselectMesh = () => {
-    setSelectedMesh(null);
-  };
   const { scene } = useGLTF('/Xbot.glb');
 
   return (
@@ -93,18 +105,10 @@ function Scene() {
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
       <Suspense>
-        <Xbot
-          object={scene}
-          castShadow
-          receiveShadow
-          scale={1}
-          position={[0, 0, 0]}
-          onClick={() => setSelectedMesh(xbotRef.current)}
-          onPointerMissed={deselectMesh}
-        />
+        <Xbot />
       </Suspense>
-      {selectedMesh && <TransformControls mode={gizmoMode} object={selectedMesh} />}
-      <OrbitControls enabled={!selectedMesh} />
+      {gizmoStore.selectedMesh && <TransformControls mode={gizmoMode} object={gizmoStore.selectedMesh} />}
+      <OrbitControls enabled={!gizmoStore.selectedMesh} />
       <Grid scale={100} />
     </>
   );
